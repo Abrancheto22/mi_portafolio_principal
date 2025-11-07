@@ -1,43 +1,82 @@
-import { supabase } from '@/lib/supabaseClient'; // Importamos el cliente que creaste
+import { supabase } from '@/lib/supabaseClient';
 
-// Esta función se ejecuta en el servidor de Next.js (Server Component)
+// Importa todos los componentes modulares
+import Navbar from '@/components/Navbar';
+import AboutSection from '@/components/AboutSection';
+import ExperienceSection from '@/components/ExperienceSection';
+import EducationSection from '@/components/EducationSection';
+import ProjectList from '@/components/ProjectList';
+import ContactForm from '@/components/ContactForm';
+
+// 1. La lógica de datos (Server-Side) se queda aquí
 async function getPortafolioItems() {
-  // Hacemos la consulta a la tabla 'portafolio'
   const { data, error } = await supabase
     .from('portafolio')
-    .select('*') // Selecciona todas las columnas
-    .limit(10); // Limita a 10 elementos
+    .select('*')
+    .order('fecha_creacion', { ascending: false });
 
   if (error) {
-    // Muestra el error en la consola del servidor (terminal)
     console.error("Error al cargar datos:", error);
     return [];
   }
   return data;
 }
 
-// Componente principal de la página
+// 2. El componente de página que ensambla todo
 export default async function Home() {
+  // Obtiene los datos de forma asíncrona
   const portafolioItems = await getPortafolioItems();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold mb-6">Portafolio de Ingeniería (Conexión Exitosa)</h1>
+    <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+      <Navbar />
 
-      {portafolioItems.length > 0 ? (
-        // Si hay datos, los mostramos
-        <div className="bg-green-100 p-4 rounded-md border border-green-400">
-          <p className="font-semibold text-green-700">✅ Conexión con Supabase verificada.</p>
-          <h2 className="text-xl mt-2">Título del Proyecto Leído: {portafolioItems[0].titulo}</h2>
-          <p className="text-sm">Tecnologías: {portafolioItems[0].tecnologias.join(', ')}</p>
-          <p className="text-xs mt-2">ID en la DB: {portafolioItems[0].id}</p>
+      <div className="layout-container flex h-full grow flex-col">
+        <div className="px-4 md:px-20 lg:px-40 flex flex-1 justify-center py-5">
+          <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
+            
+            {/* --- SECCIÓN HERO (PERFIL) --- */}
+            <div className="flex p-4 @container" id="profile">
+              <div className="flex w-full flex-col gap-4 items-center">
+                <div className="flex gap-4 flex-col items-center">
+                  <div
+                    className="bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-32 w-32 border-2 border-[#233648]"
+                    style={{ backgroundImage: `url("https://i.pinimg.com/564x/9d/6b/9d/9d6b9db2dcb0526a09b89fb35d075c72.jpg")` }}
+                  ></div>
+                  <div className="flex flex-col items-center justify-center">
+                    <p className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] text-center">
+                      Abraham Ordoñez Reyes
+                    </p>
+                    <p className="text-[#92adc9] text-base font-normal leading-normal text-center">
+                      Ingeniero de Sistemas
+                    </p>
+                    <p className="text-[#92adc9] text-base font-normal leading-normal text-center">
+                      El Porvenir, Perú
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* --- COMPONENTES MODULARES --- */}
+            
+            <AboutSection />
+            
+            <ExperienceSection />
+            
+            <EducationSection />
+
+            {/* --- PROYECTOS (DINÁMICO) --- */}
+            <h2 id="projects" className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5 scroll-mt-20">
+              Proyectos
+            </h2>
+            <ProjectList items={portafolioItems} />
+            
+            <ContactForm />
+
+          </div>
         </div>
-      ) : (
-        // Si no hay datos (o falló la lectura)
-        <div className="bg-yellow-100 p-4 rounded-md border border-yellow-400">
-          <p className="font-semibold text-yellow-700">⚠️ Conexión con DB OK, pero tabla 'portafolio' vacía. Inserta un dato en Supabase.</p>
-        </div>
-      )}
-    </main>
+      </div>
+    </div>
   );
 }

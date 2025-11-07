@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
@@ -23,4 +26,15 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  /* Asegura que estas fuentes se apliquen al body */
+  body {
+    font-family: var(--font-inter), "Noto Sans", sans-serif;
+  }
+  /* Esto es del HTML original, lo incluimos para máxima fidelidad si Tailwind no lo procesa por defecto */
+  .dark {
+    color-scheme: dark;
+  }
 }
