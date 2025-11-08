@@ -1,4 +1,6 @@
 import React from 'react';
+import { type User } from '@supabase/supabase-js';
+import LogoutButton from './LogoutButton'; // <--- AÑADE ESTA LÍNEA
 
 // Iconos (puedes reemplazarlos por react-icons si prefieres)
 const GithubIcon = () => (
@@ -19,7 +21,13 @@ const LogoIcon = () => (
   </svg>
 );
 
-const Navbar = () => {
+// ¡NUEVO! Definimos los tipos de las props que recibe Navbar
+interface NavbarProps {
+  user: User | null; // El usuario puede ser un objeto User o null
+}
+
+
+const Navbar: React.FC<NavbarProps> = ({ user }) => {
   return (
     <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#233648] px-10 py-3">
       <div className="flex items-center gap-4 text-white">
@@ -36,6 +44,12 @@ const Navbar = () => {
           <a className="text-white text-sm font-medium leading-normal" href="#experience">Experiencia</a>
           <a className="text-white text-sm font-medium leading-normal" href="#projects">Proyectos</a>
           <a className="text-white text-sm font-medium leading-normal" href="#contact">Contacto</a>
+          
+          {/* ¡NUEVO! Lógica condicional */}
+          {user && (
+            <span className="text-yellow-400 text-sm font-bold">(ADMIN)</span>
+          )}
+
         </div>
         <div className="flex gap-2">
           <button className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-[#233648] text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
@@ -44,6 +58,12 @@ const Navbar = () => {
           <button className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-[#233648] text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
             <LinkedinIcon />
           </button>
+          
+          {/* ¡NUEVO! Lógica condicional para el botón de Logout */}
+          {user && (
+            <LogoutButton />
+          )}
+
         </div>
       </div>
     </header>

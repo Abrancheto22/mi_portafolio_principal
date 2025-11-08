@@ -1,4 +1,5 @@
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/server'; // NUEVO
+import { cookies } from 'next/headers'; // <-- AÑADE ESTO
 
 // Importa todos los componentes modulares
 import Navbar from '@/components/Navbar';
@@ -10,6 +11,8 @@ import ContactForm from '@/components/ContactForm';
 
 // 1. La lógica de datos (Server-Side) se queda aquí
 async function getPortafolioItems() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore); // NUEVO
   const { data, error } = await supabase
     .from('portafolio')
     .select('*')
@@ -24,12 +27,18 @@ async function getPortafolioItems() {
 
 // 2. El componente de página que ensambla todo
 export default async function Home() {
-  // Obtiene los datos de forma asíncrona
+  const cookieStore = cookies();
+
+  // 1. OBTENER LOS PROYECTOS (como antes)
   const portafolioItems = await getPortafolioItems();
+
+  // 2. OBTENER LA SESIÓN DEL USUARIO (¡NUEVO!)
+  const supabase = createClient(cookieStore); // Cliente de servidor
+  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
-      <Navbar />
+      <Navbar user={user} />
 
       <div className="layout-container flex h-full grow flex-col">
         <div className="px-4 md:px-20 lg:px-40 flex flex-1 justify-center py-5">
