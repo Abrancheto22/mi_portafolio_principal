@@ -18,7 +18,7 @@ async function getProject(id: string): Promise<PortafolioItem | null> {
   const supabase = createClient(cookieStore);
 
   const { data, error } = await supabase
-    .from('portafolio')
+    .from('proyectos')
     .select('*')
     .eq('id', id) // <-- Filtramos por el ID del proyecto
     .single(); // <-- Esperamos un solo resultado

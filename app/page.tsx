@@ -1,85 +1,88 @@
-import { createClient } from '@/lib/supabase/server'; // NUEVO
-import { cookies } from 'next/headers'; // <-- AÑADE ESTO
-
-// Importa todos los componentes modulares
+import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import Navbar from '@/components/Navbar';
 import AboutSection from '@/components/AboutSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import EducationSection from '@/components/EducationSection';
 import ProjectList from '@/components/ProjectList';
 import ContactForm from '@/components/ContactForm';
+import HeroProfile from '@/components/HeroProfile';
+import { PortafolioItem } from '@/app/admin/proyectos/page';
+import { ExperienciaItem } from '@/app/admin/experiencia/page';
+import { EducacionItem } from '@/app/admin/educacion/page';
+import { PerfilItem } from '@/app/admin/sobre-mi/page';
 
-// 1. La lógica de datos (Server-Side) se queda aquí
-async function getPortafolioItems() {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore); // NUEVO
-  const { data, error } = await supabase
-    .from('portafolio')
-    .select('*')
-    .order('fecha_creacion', { ascending: false });
+// --- FUNCIONES DE OBTENCIÓN DE DATOS ---
 
-  if (error) {
-    console.error("Error al cargar datos:", error);
-    return [];
-  }
+// 1. Obtener Perfil (el que acabamos de crear)
+async function getProfile(supabase: any): Promise<PerfilItem | null> {
+  const { data, error } = await supabase.from('perfil').select('*').limit(1).single();
+  if (error) console.error("Error al cargar perfil:", error.message);
   return data;
 }
 
-// 2. El componente de página que ensambla todo
+// 2. Obtener Proyectos
+async function getProjects(supabase: any): Promise<PortafolioItem[]> {
+  const { data, error } = await supabase.from('proyectos').select('*').order('fecha_creacion', { ascending: false });
+  if (error) console.error("Error al cargar proyectos:", error.message);
+  return data || [];
+}
+
+// 3. Obtener Experiencia
+async function getExperience(supabase: any): Promise<ExperienciaItem[]> {
+  const { data, error } = await supabase.from('experiencia').select('*').order('fecha_inicio', { ascending: false });
+  if (error) console.error("Error al cargar experiencia:", error.message);
+  return data || [];
+}
+
+// 4. Obtener Educación
+async function getEducation(supabase: any): Promise<EducacionItem[]> {
+  const { data, error } = await supabase.from('educacion').select('*').order('fecha_inicio', { ascending: false });
+  if (error) console.error("Error al cargar educación:", error.message);
+  return data || [];
+}
+
+// --- PÁGINA PRINCIPAL ---
 export default async function Home() {
   const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
-  // 1. OBTENER LOS PROYECTOS (como antes)
-  const portafolioItems = await getPortafolioItems();
-
-  // 2. OBTENER LA SESIÓN DEL USUARIO (¡NUEVO!)
-  const supabase = createClient(cookieStore); // Cliente de servidor
+  // Obtenemos la sesión del usuario (para el botón de Admin/Logout)
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Cargamos TODOS los datos en paralelo para máxima velocidad
+  const [profile, projects, experiences, educationItems] = await Promise.all([
+    getProfile(supabase),
+    getProjects(supabase),
+    getExperience(supabase),
+    getEducation(supabase),
+  ]);
+
   return (
-    <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+    <div className="relative flex h-auto min-h-screen w-full flex-col">
       <Navbar user={user} />
 
       <div className="layout-container flex h-full grow flex-col">
         <div className="px-4 md:px-20 lg:px-40 flex flex-1 justify-center py-5">
           <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
             
-            {/* --- SECCIÓN HERO (PERFIL) --- */}
-            <div className="flex p-4 @container" id="profile">
-              <div className="flex w-full flex-col gap-4 items-center">
-                <div className="flex gap-4 flex-col items-center">
-                  <div
-                    className="bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-32 w-32 border-2 border-[#233648]"
-                    style={{ backgroundImage: `url("https://i.pinimg.com/564x/9d/6b/9d/9d6b9db2dcb0526a09b89fb35d075c72.jpg")` }}
-                  ></div>
-                  <div className="flex flex-col items-center justify-center">
-                    <p className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] text-center">
-                      Abraham Ordoñez Reyes
-                    </p>
-                    <p className="text-[#92adc9] text-base font-normal leading-normal text-center">
-                      Ingeniero de Sistemas
-                    </p>
-                    <p className="text-[#92adc9] text-base font-normal leading-normal text-center">
-                      El Porvenir, Perú
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* --- SECCIÓN HERO (PERFIL) - AHORA DINÁMICA --- */}
+            {profile && <HeroProfile profile={profile} />}
 
-            {/* --- COMPONENTES MODULARES --- */}
+            {/* --- SECCIÓN ACERCA DE - AHORA DINÁMICA --- */}
+            {profile && <AboutSection aboutText={profile.acerca_de} />}
             
-            <AboutSection />
+            {/* --- SECCIÓN EXPERIENCIA - AHORA DINÁMICA --- */}
+            <ExperienceSection experiences={experiences} />
             
-            <ExperienceSection />
-            
-            <EducationSection />
+            {/* --- SECCIÓN EDUCACIÓN - AHORA DINÁMICA --- */}
+            <EducationSection educationItems={educationItems} />
 
-            {/* --- PROYECTOS (DINÁMICO) --- */}
-            <h2 id="projects" className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5 scroll-mt-20">
+            {/* --- SECCIÓN PROYECTOS (DINÁMICA) --- */}
+            <h2 id="projects" className="text-slate-900 text-3xl font-bold px-4 pb-3 pt-5 scroll-mt-20 border-b-2 border-blue-500 mb-6">
               Proyectos
             </h2>
-            <ProjectList items={portafolioItems} />
+            <ProjectList items={projects} />
             
             <ContactForm />
 

@@ -66,7 +66,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ proyectos: initialProject
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {proyectos.map((proyecto) => (
-            <tr key={proyecto.id}>
+            <tr key={proyecto.id} className="hover:bg-gray-50 transition-colors duration-150">
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{proyecto.titulo}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{proyecto.tecnologias.join(', ')}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">

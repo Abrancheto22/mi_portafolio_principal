@@ -1,16 +1,15 @@
 import React from 'react';
 
-const AboutSection = () => {
+interface AboutSectionProps {
+  aboutText: string;
+}
+
+const AboutSection: React.FC<AboutSectionProps> = ({ aboutText }) => {
   return (
-    <section id="about" className="scroll-mt-20">
-      <h2 className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
-        Acerca de
-      </h2>
-      <p className="text-white text-base font-normal leading-normal pb-3 pt-1 px-4">
-        {/* !! IMPORTANTE: Escribe tu propia descripción */}
-        Soy un ingeniero de sistemas con experiencia en el desarrollo de aplicaciones web y móviles. Me especializo en la creación de soluciones innovadoras
-        y eficientes utilizando tecnologías modernas. Mi objetivo es aplicar mis habilidades técnicas para resolver problemas complejos y contribuir al éxito de proyectos
-        desafiantes.
+    <section id="about" className="scroll-mt-20 mb-8">
+      <h2 className="text-slate-900 text-3xl font-bold px-4 pb-3 pt-5 border-b-2 border-blue-500 mb-4">Acerca de</h2>
+      <p className="text-slate-700 text-base leading-relaxed pb-3 pt-1 px-4">
+        {aboutText} {/* <-- DATO DINÁMICO */}
       </p>
     </section>
   );

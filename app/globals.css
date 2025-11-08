@@ -1,40 +1,15 @@
-@import "tailwindcss";
+/* 1. Importa las directivas de Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
+/* 2. Aplica las fuentes base (como lo teníamos) */
 @layer base {
-  /* Asegura que estas fuentes se apliquen al body */
   body {
+    /* IMPORTANTE: No establecemos 'background' o 'color' aquí.
+      Dejamos que app/layout.tsx (con 'bg-slate-50' y 'text-slate-900')
+      se encargue de eso, para que Tailwind tenga el control.
+    */
     font-family: var(--font-inter), "Noto Sans", sans-serif;
-  }
-  /* Esto es del HTML original, lo incluimos para máxima fidelidad si Tailwind no lo procesa por defecto */
-  .dark {
-    color-scheme: dark;
   }
 }

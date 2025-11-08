@@ -1,54 +1,56 @@
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import ProjectsTable from '@/components/admin/ProjectsTable';
+import EducationTable from '@/components/admin/EducationTable';
 
-export type PortafolioItem = {
+// 1. Definimos el TIPO de dato
+export type EducacionItem = {
   id: string;
   titulo: string;
-  descripcion: string;
-  tecnologias: string[];
-  url_demo: string | null;
-  url_github: string;
-  fecha_creacion: string;
+  institucion: string;
+  fecha_inicio: string;
+  fecha_fin: string | null;
+  created_at: string;
 };
 
-async function getPortafolioItems(): Promise<PortafolioItem[]> {
+// 2. Función para obtener los datos
+async function getEducacionItems(): Promise<EducacionItem[]> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
   const { data, error } = await supabase
-    .from('proyectos')
+    .from('educacion')
     .select('*')
-    .order('fecha_creacion', { ascending: false });
+    .order('fecha_inicio', { ascending: false });
 
   if (error) {
-    console.error("Error al cargar proyectos:", error);
+    console.error("Error al cargar educación:", error);
     return [];
   }
-  return data as PortafolioItem[];
+  return data as EducacionItem[];
 }
 
-export default async function AdminProyectosPage() {
-  const proyectos = await getPortafolioItems();
+// 3. La página "Índice"
+export default async function AdminEducacionPage() {
+  const educacionItems = await getEducacionItems();
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-gray-900 text-3xl font-bold">
-          Gestión de Proyectos
+          Gestión de Educación
         </h1>
-
         <Link
-          href="/admin/proyectos/create"
+          href="/admin/educacion/create"
           className="flex min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-10 px-5 
                      bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold
                      shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
         >
-          Nuevo Proyecto
+          Añadir Educación
         </Link>
       </div>
-      <ProjectsTable proyectos={proyectos} />
+      
+      <EducationTable educacionItems={educacionItems} />
     </div>
   );
 }
