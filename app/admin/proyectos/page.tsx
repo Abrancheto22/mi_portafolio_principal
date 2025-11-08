@@ -12,6 +12,7 @@ export type PortafolioItem = {
   url_github: string;
   fecha_creacion: string;
   image_url: string | null;
+  estado: boolean;
 };
 
 async function getPortafolioItems(): Promise<PortafolioItem[]> {

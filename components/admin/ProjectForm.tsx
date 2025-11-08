@@ -160,6 +160,21 @@ export default function ProjectForm({ project }: ProjectFormProps) {
             />
           </div>
         </div>
+        
+        <div>
+          <label htmlFor="estado" className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="estado"
+              id="estado"
+              className="form-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+              defaultChecked={project?.estado ?? true} 
+            />
+            <span className="text-sm font-semibold text-gray-700">
+              Activo (Mostrar en el portafolio público)
+            </span>
+          </label>
+        </div>
 
         {/* Mensaje de Error (sin cambios) */}
         {state?.message && (

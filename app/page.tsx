@@ -13,6 +13,7 @@ import { ExperienciaItem } from '@/app/admin/experiencia/page';
 import { EducacionItem } from '@/app/admin/educacion/page';
 import { PerfilItem } from '@/app/admin/sobre-mi/page';
 import { HabilidadItem } from '@/app/admin/habilidades/page';
+import { SocialLinkItem } from '@/app/admin/redes/page';
 
 // --- FUNCIONES DE OBTENCIÓN DE DATOS ---
 
@@ -25,29 +26,41 @@ async function getProfile(supabase: any): Promise<PerfilItem | null> {
 
 // 2. Obtener Proyectos
 async function getProjects(supabase: any): Promise<PortafolioItem[]> {
-  const { data, error } = await supabase.from('proyectos').select('*').order('fecha_creacion', { ascending: false });
+  const { data, error } = await supabase.from('proyectos').select('*').eq('estado', true).order('fecha_creacion', { ascending: false });
   if (error) console.error("Error al cargar proyectos:", error.message);
   return data || [];
 }
 
 // 3. Obtener Experiencia
 async function getExperience(supabase: any): Promise<ExperienciaItem[]> {
-  const { data, error } = await supabase.from('experiencia').select('*').order('fecha_inicio', { ascending: false });
+  const { data, error } = await supabase.from('experiencia').select('*').eq('estado', true).order('fecha_inicio', { ascending: false });
   if (error) console.error("Error al cargar experiencia:", error.message);
   return data || [];
 }
 
 // 4. Obtener Educación
 async function getEducation(supabase: any): Promise<EducacionItem[]> {
-  const { data, error } = await supabase.from('educacion').select('*').order('fecha_inicio', { ascending: false });
+  const { data, error } = await supabase.from('educacion').select('*').eq('estado', true).order('fecha_inicio', { ascending: false });
   if (error) console.error("Error al cargar educación:", error.message);
   return data || [];
 }
 
 // 5. Obtener Habilidades
 async function getSkills(supabase: any): Promise<HabilidadItem[]> {
-  const { data, error } = await supabase.from('habilidades').select('*').order('nombre', { ascending: true });
+  const { data, error } = await supabase.from('habilidades').select('*').eq('estado', true).order('nombre', { ascending: true });
   if (error) console.error("Error al cargar habilidades:", error.message);
+  return data || [];
+}
+
+// 6. Obtener Redes Sociales
+async function getSocialLinks(supabase: any): Promise<SocialLinkItem[]> {
+  const { data, error } = await supabase
+    .from('redes_sociales')
+    .select('*')
+    .eq('estado', true) // <-- ¡Solo trae las redes ACTIVAS!
+    .order('nombre', { ascending: true });
+    
+  if (error) console.error("Error al cargar redes sociales:", error.message);
   return data || [];
 }
 
@@ -59,18 +72,18 @@ export default async function Home() {
   // Obtenemos la sesión del usuario (para el botón de Admin/Logout)
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Cargamos TODOS los datos en paralelo para máxima velocidad
-  const [profile, projects, experiences, educationItems, skills] = await Promise.all([
+  const [profile, projects, experiences, educationItems, skills, socialLinks] = await Promise.all([
     getProfile(supabase),
     getProjects(supabase),
     getExperience(supabase),
     getEducation(supabase),
     getSkills(supabase),
+    getSocialLinks(supabase),
   ]);
 
   return (
     <div className="relative flex h-auto min-h-screen w-full flex-col">
-      <Navbar user={user} />
+      <Navbar user={user} socialLinks={socialLinks} />
 
       <div className="layout-container flex h-full grow flex-col">
         <div className="px-4 md:px-20 lg:px-40 flex flex-1 justify-center py-5">

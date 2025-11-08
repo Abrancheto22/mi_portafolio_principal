@@ -13,6 +13,7 @@ export type ExperienciaItem = {
   fecha_fin: string | null; // Puede ser nulo
   descripcion: string;
   created_at: string;
+  estado: boolean;
 };
 
 // 2. Función para obtener los datos (Server-Side)

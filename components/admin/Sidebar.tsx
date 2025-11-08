@@ -8,8 +8,9 @@ const links = [
   { href: '/admin/proyectos', label: 'Proyectos' },
   { href: '/admin/experiencia', label: 'Experiencia' },
   { href: '/admin/educacion', label: 'Educación' },
-    { href: '/admin/habilidades', label: 'Habilidades' },
+  { href: '/admin/habilidades', label: 'Habilidades' },
   { href: '/admin/sobre-mi', label: 'Sobre Mí' },
+  { href: '/admin/redes', label: 'Redes Sociales' },
   { href: '/', label: '← Volver al Portafolio' },
 ];
 

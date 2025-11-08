@@ -2,8 +2,9 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { upsertEducation } from '@/lib/actions'; // Importa la Server Action
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { EducacionItem } from '@/app/admin/educacion/page';
+import { useRouter } from 'next/navigation';
 
 interface EducationFormProps {
   education?: EducacionItem; 
@@ -30,9 +31,21 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
 
 // Formulario principal
 export default function EducationForm({ education }: EducationFormProps) {
+  const router = useRouter();
   const isEditing = !!education; 
-  const initialState = { message: null }; 
+  const initialState = { success: false, message: null };
   const [state, dispatch] = useFormState(upsertEducation as any, initialState); 
+
+  // --- AÑADE ESTE HOOK ---
+  useEffect(() => {
+    if (state.success) {
+      const timer = setTimeout(() => {
+        router.push('/admin/educacion'); // Redirige a la tabla de educación
+      }, 1500); 
+      return () => clearTimeout(timer);
+    }
+  }, [state.success, router]);
+  // --- FIN DEL HOOK ---
 
   const formatDateForInput = (dateString: string | null | undefined) => {
     if (!dateString) return '';
@@ -104,8 +117,27 @@ export default function EducationForm({ education }: EducationFormProps) {
           </div>
         </div>
 
+        {/* --- CAMPO DE ESTADO (CHECKBOX) --- */}
+        <div>
+          <label htmlFor="estado" className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="estado"
+              id="estado"
+              className="form-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+              defaultChecked={education?.estado ?? true}
+            />
+            <span className="text-sm font-semibold text-gray-700">
+              Activo (Mostrar en el portafolio público)
+            </span>
+          </label>
+        </div>
+
+        {/* Mensaje de Estado (Éxito/Error) */}
         {state?.message && (
-          <div className="text-red-500 text-sm p-3 bg-red-50 border border-red-300 rounded-md">
+          <div className={`text-sm p-3 rounded-md ${
+            state.success ? 'bg-green-100 border border-green-300 text-green-700' : 'bg-red-50 border border-red-300 text-red-500'
+          }`}>
             {state.message}
           </div>
         )}

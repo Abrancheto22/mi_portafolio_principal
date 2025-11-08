@@ -1,57 +1,50 @@
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import EducationTable from '@/components/admin/EducationTable';
+import SocialLinksTable from '@/components/admin/SocialLinksTable';
 
-// 1. Definimos el TIPO de dato
-export type EducacionItem = {
+export type SocialLinkItem = {
   id: string;
-  titulo: string;
-  institucion: string;
-  fecha_inicio: string;
-  fecha_fin: string | null;
+  nombre: string;
+  url: string;
   created_at: string;
   estado: boolean;
 };
 
-// 2. Función para obtener los datos
-async function getEducacionItems(): Promise<EducacionItem[]> {
+async function getSocialLinks(): Promise<SocialLinkItem[]> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-
   const { data, error } = await supabase
-    .from('educacion')
+    .from('redes_sociales')
     .select('*')
-    .order('fecha_inicio', { ascending: false });
+    .order('nombre', { ascending: true });
 
   if (error) {
-    console.error("Error al cargar educación:", error);
+    console.error("Error al cargar redes:", error);
     return [];
   }
-  return data as EducacionItem[];
+  return data as SocialLinkItem[];
 }
 
-// 3. La página "Índice"
-export default async function AdminEducacionPage() {
-  const educacionItems = await getEducacionItems();
+export default async function AdminRedesPage() {
+  const socialLinks = await getSocialLinks();
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-gray-900 text-3xl font-bold">
-          Gestión de Educación
+          Gestión de Redes Sociales
         </h1>
         <Link
-          href="/admin/educacion/create"
+          href="/admin/redes/create"
           className="flex min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-10 px-5 
                      bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold
                      shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
         >
-          Añadir Educación
+          Añadir Red Social
         </Link>
       </div>
-      
-      <EducationTable educacionItems={educacionItems} />
+      <SocialLinksTable socialLinks={socialLinks} />
     </div>
   );
 }

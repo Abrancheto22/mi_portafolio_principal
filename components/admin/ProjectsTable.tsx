@@ -54,52 +54,42 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ proyectos: initialProject
           
           <thead className="bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Título
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Tecnologías
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                GitHub
-              </th>
-              <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Opciones
-              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Título</th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tecnologías</th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">GitHub</th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+              <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Opciones</th>
             </tr>
           </thead>
 
           <tbody className="bg-white divide-y divide-gray-200">
             {proyectos.map((proyecto) => (
               <tr key={proyecto.id} className="odd:bg-white even:bg-slate-50 hover:bg-blue-50 transition-colors duration-150">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {proyecto.titulo}
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{proyecto.titulo}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{proyecto.tecnologias.join(', ')}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600"><a href={proyecto.url_github} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Ver Repo</a></td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {proyecto.estado ? (
+                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      Activo
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                      Inactivo
+                    </span>
+                  )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {proyecto.tecnologias.join(', ')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  <a href={proyecto.url_github} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                    Ver Repo
-                  </a>
-                </td>
-                
-                {/* --- CAMBIO DE ESTILO AQUÍ --- */}
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                   <button
                     onClick={() => handleEdit(proyecto.id)}
-                    className="px-4 py-2 rounded-lg font-semibold text-sm {/* <-- Más grande */}
-                               bg-yellow-100 text-yellow-800 
-                               hover:bg-yellow-200 transition-colors duration-150"
+                    className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition-colors duration-150"
                     disabled={isPending}
                   >
                     Editar
                   </button>
                   <button
                     onClick={() => handleDeleteClick(proyecto)}
-                    className="px-4 py-2 rounded-lg font-semibold text-sm {/* <-- Más grande */}
-                               bg-red-100 text-red-800 
-                               hover:bg-red-200 transition-colors duration-150"
+                    className="px-4 py-2 rounded-lg font-semibold text-sm bg-red-100 text-red-800 hover:bg-red-200 transition-colors duration-150"
                     disabled={isPending}
                   >
                     Eliminar
@@ -109,7 +99,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({ proyectos: initialProject
             ))}
             {proyectos.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                   No hay proyectos. ¡Añade uno!
                 </td>
               </tr>

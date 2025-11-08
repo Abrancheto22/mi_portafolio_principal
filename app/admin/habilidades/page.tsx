@@ -9,6 +9,7 @@ export type HabilidadItem = {
   nombre: string;
   tipo: string | null;
   created_at: string;
+  estado: boolean;
 };
 
 // 2. Función para obtener los datos

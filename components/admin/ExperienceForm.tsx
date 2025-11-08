@@ -2,8 +2,9 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { upsertExperience } from '@/lib/actions'; // <--- 1. Importa la nueva Server Action
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ExperienciaItem } from '@/app/admin/experiencia/page'; // Importa el tipo
+import { useRouter } from 'next/navigation';
 
 // Props: El formulario puede recibir una experiencia (para editar) o ser vacío (para crear)
 interface ExperienceFormProps {
@@ -32,14 +33,22 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
 
 // Componente principal del formulario
 export default function ExperienceForm({ experience }: ExperienceFormProps) {
-  // Determina si estamos editando
+  const router = useRouter();
   const isEditing = !!experience; 
-  
-  // 2. Conecta el formulario a la Server Action
-  const initialState = { message: null }; 
+  const initialState = { success: false, message: null };
   const [state, dispatch] = useFormState(upsertExperience as any, initialState); 
 
-  // Helper para formatear fechas para el input tipo 'date' (YYYY-MM-DD)
+  // --- AÑADE ESTE HOOK ---
+  useEffect(() => {
+    if (state.success) {
+      const timer = setTimeout(() => {
+        router.push('/admin/experiencia'); // Redirige a la tabla de experiencia
+      }, 1500); 
+      return () => clearTimeout(timer);
+    }
+  }, [state.success, router]);
+  // --- FIN DEL HOOK ---
+
   const formatDateForInput = (dateString: string | null | undefined) => {
     if (!dateString) return '';
     return new Date(dateString).toISOString().split('T')[0];
@@ -48,10 +57,8 @@ export default function ExperienceForm({ experience }: ExperienceFormProps) {
   return (
     <div className="bg-white p-8 rounded-lg border border-gray-200 shadow-sm">
       
-      {/* 3. El <form> ahora usa la 'action' (dispatch) */}
       <form action={dispatch} className="space-y-6">
         
-        {/* Campo oculto para el ID (solo si estamos editando) */}
         {isEditing && (
             <input type="hidden" name="id" defaultValue={experience.id} />
         )}
@@ -127,9 +134,27 @@ export default function ExperienceForm({ experience }: ExperienceFormProps) {
           />
         </div>
 
-        {/* 4. Mensaje de error (si algo falla) */}
+        {/* --- CAMPO DE ESTADO (CHECKBOX) --- */}
+      <div>
+        <label htmlFor="estado" className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            name="estado"
+            id="estado"
+            className="form-checkbox h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+            defaultChecked={experience?.estado ?? true} 
+          />
+          <span className="text-sm font-semibold text-gray-700">
+            Activo (Mostrar en el portafolio público)
+          </span>
+        </label>
+      </div>
+
+        {/* Mensaje de Estado (Éxito/Error) */}
         {state?.message && (
-          <div className="text-red-500 text-sm p-3 bg-red-50 border border-red-300 rounded-md">
+          <div className={`text-sm p-3 rounded-md ${
+            state.success ? 'bg-green-100 border border-green-300 text-green-700' : 'bg-red-50 border border-red-300 text-red-500'
+          }`}>
             {state.message}
           </div>
         )}

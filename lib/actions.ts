@@ -4,11 +4,9 @@ import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { Resend } from 'resend';
 
 // --- ACCIONES PARA PROYECTOS ---
-// --- EN lib/actions.ts ---
-
-// Reemplaza tu función upsertProject existente con esta:
 export async function upsertProject(prevState: any, formData: FormData) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
@@ -27,6 +25,7 @@ export async function upsertProject(prevState: any, formData: FormData) {
       .map(tech => tech.trim()),
     // Obtenemos la URL de la imagen existente (si la hay)
     image_url: formData.get('image_url_existente') as string,
+    estado: formData.get('estado') === 'on' ? true : false,
   };
 
   // 2. Validar texto
@@ -73,7 +72,8 @@ export async function upsertProject(prevState: any, formData: FormData) {
     tecnologias: data.tecnologias,
     url_demo: data.url_demo || null,
     url_github: data.url_github,
-    image_url: data.image_url || null, // <-- Guarda la URL de la imagen
+    image_url: data.image_url || null,
+    estado: data.estado
   };
 
   if (projectId) {
@@ -124,61 +124,38 @@ export async function deleteProject(id: string) {
 export async function upsertExperience(prevState: any, formData: FormData) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-
   const experienceId = formData.get('id') as string | null;
-  
   const data = {
     puesto: formData.get('puesto') as string,
     empresa: formData.get('empresa') as string,
     fecha_inicio: formData.get('fecha_inicio') as string,
     fecha_fin: (formData.get('fecha_fin') as string) || null,
     descripcion: formData.get('descripcion') as string,
+    estado: formData.get('estado') === 'on' ? true : false,
   };
 
   if (!data.puesto || !data.empresa || !data.fecha_inicio || !data.descripcion) {
-    return { message: 'Todos los campos obligatorios deben ser llenados.' };
+    return { success: false, message: 'Todos los campos obligatorios deben ser llenados.' };
   }
-
-  let query = supabase.from('experiencia');
   
+  let query = supabase.from('experiencia');
   if (experienceId) {
-    const { error } = await query
-      .update({
-        puesto: data.puesto,
-        empresa: data.empresa,
-        fecha_inicio: data.fecha_inicio,
-        fecha_fin: data.fecha_fin,
-        descripcion: data.descripcion,
-      })
-      .eq('id', experienceId);
-    
+    const { error } = await query.update({ ...data }).eq('id', experienceId);
     if (error) {
         console.error('Error al actualizar experiencia:', error);
-        return { message: `Error al actualizar: ${error.message}` };
+        return { success: false, message: `Error al actualizar: ${error.message}` };
     }
-
   } else {
-    const { error } = await query
-      .insert([
-        {
-          puesto: data.puesto,
-          empresa: data.empresa,
-          fecha_inicio: data.fecha_inicio,
-          fecha_fin: data.fecha_fin,
-          descripcion: data.descripcion,
-        }
-      ]);
-      
+    const { error } = await query.insert([{ ...data }]);
     if (error) {
       console.error('Error al crear experiencia:', error);
-      return { message: `Error al guardar: ${error.message}` };
+      return { success: false, message: `Error al guardar: ${error.message}` };
     }
   }
 
   revalidatePath('/admin/experiencia'); 
   revalidatePath('/'); 
-  
-  redirect('/admin/experiencia');
+  return { success: true, message: experienceId ? 'Experiencia actualizada.' : 'Experiencia creada.' };
 }
 export async function deleteExperience(id: string) {
   const cookieStore = cookies();
@@ -212,53 +189,37 @@ export async function deleteExperience(id: string) {
 export async function upsertEducation(prevState: any, formData: FormData) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-
-  // 1. Obtener y parsear los datos
   const educationId = formData.get('id') as string | null;
-  
   const data = {
     titulo: formData.get('titulo') as string,
     institucion: formData.get('institucion') as string,
     fecha_inicio: formData.get('fecha_inicio') as string,
     fecha_fin: (formData.get('fecha_fin') as string) || null,
+    estado: formData.get('estado') === 'on' ? true : false,
   };
 
-  // 2. Validar
   if (!data.titulo || !data.institucion || !data.fecha_inicio) {
-    return { message: 'Todos los campos obligatorios deben ser llenados.' };
+    return { success: false, message: 'Todos los campos obligatorios deben ser llenados.' };
   }
-
-  // 3. Lógica de Upsert
-  let query = supabase.from('educacion');
   
+  let query = supabase.from('educacion');
   if (educationId) {
-    // UPDATE
-    const { error } = await query
-      .update({ ...data })
-      .eq('id', educationId);
-    
+    const { error } = await query.update({ ...data }).eq('id', educationId);
     if (error) {
         console.error('Error al actualizar educación:', error);
-        return { message: `Error al actualizar: ${error.message}` };
+        return { success: false, message: `Error al actualizar: ${error.message}` };
     }
-
   } else {
-    // INSERT
-    const { error } = await query
-      .insert([
-        { ...data }
-      ]);
-      
+    const { error } = await query.insert([{ ...data }]);
     if (error) {
       console.error('Error al crear educación:', error);
-      return { message: `Error al guardar: ${error.message}` };
+      return { success: false, message: `Error al guardar: ${error.message}` };
     }
   }
-
-  // 5. Éxito: Limpiar la caché y redirigir
+  
   revalidatePath('/admin/educacion');
   revalidatePath('/');
-  redirect('/admin/educacion');
+  return { success: true, message: educationId ? 'Educación actualizada.' : 'Educación creada.' };
 }
 export async function deleteEducation(id: string) {
   const cookieStore = cookies();
@@ -288,58 +249,37 @@ export async function deleteEducation(id: string) {
 export async function upsertSkill(prevState: any, formData: FormData) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-
-  // 1. Obtener y parsear los datos
   const skillId = formData.get('id') as string | null;
-  
   const data = {
     nombre: formData.get('nombre') as string,
-    tipo: (formData.get('tipo') as string) || null, // Campo opcional
+    tipo: (formData.get('tipo') as string) || null,
+    estado: formData.get('estado') === 'on' ? true : false,
   };
 
-  // 2. Validar
   if (!data.nombre) {
-    return { message: 'El campo "Nombre" es obligatorio.' };
+    return { success: false, message: 'El campo "Nombre" es obligatorio.' };
   }
 
-  // 3. Lógica de Upsert
   let query = supabase.from('habilidades');
-  
   if (skillId) {
-    // UPDATE
-    const { error } = await query
-      .update({ ...data })
-      .eq('id', skillId);
-    
+    const { error } = await query.update({ ...data }).eq('id', skillId);
     if (error) {
         console.error('Error al actualizar habilidad:', error);
-        // Manejo de error de Supabase para nombre único
-        if (error.code === '23505') { // Código de violación de unicidad
-            return { message: 'Error: Ya existe una habilidad con ese nombre.' };
-        }
-        return { message: `Error al actualizar: ${error.message}` };
+        if (error.code === '23505') return { success: false, message: 'Error: Ya existe una habilidad con ese nombre.' };
+        return { success: false, message: `Error al actualizar: ${error.message}` };
     }
-
   } else {
-    // INSERT
-    const { error } = await query
-      .insert([
-        { ...data }
-      ]);
-      
+    const { error } = await query.insert([{ ...data }]);
     if (error) {
       console.error('Error al crear habilidad:', error);
-      if (error.code === '23505') {
-          return { message: 'Error: Ya existe una habilidad con ese nombre.' };
-      }
-      return { message: `Error al guardar: ${error.message}` };
+      if (error.code === '23505') return { success: false, message: 'Error: Ya existe una habilidad con ese nombre.' };
+      return { success: false, message: `Error al guardar: ${error.message}` };
     }
   }
 
-  // 5. Éxito: Limpiar la caché y redirigir
   revalidatePath('/admin/habilidades');
   revalidatePath('/');
-  redirect('/admin/habilidades');
+  return { success: true, message: skillId ? 'Habilidad actualizada.' : 'Habilidad creada.' };
 }
 export async function deleteSkill(id: string) {
   const cookieStore = cookies();
@@ -363,6 +303,62 @@ export async function deleteSkill(id: string) {
   revalidatePath('/');
   
   return { success: true, message: 'Habilidad eliminada con éxito.' };
+}
+
+// --- ACCIONES PARA REDES SOCIALES ---
+export async function upsertSocialLink(prevState: any, formData: FormData) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const socialId = formData.get('id') as string | null;
+  const data = {
+    nombre: formData.get('nombre') as string,
+    url: formData.get('url') as string,
+    estado: formData.get('estado') === 'on' ? true : false, 
+  };
+
+  if (!data.nombre || !data.url) {
+    return { success: false, message: 'Todos los campos son obligatorios.' };
+  }
+
+  let query = supabase.from('redes_sociales');
+  if (socialId) {
+    const { error } = await query.update({ ...data }).eq('id', socialId);
+    if (error) {
+      if (error.code === '23505') return { success: false, message: 'Error: Ya existe una red con ese nombre.' };
+      return { success: false, message: `Error al actualizar: ${error.message}` };
+    }
+  } else {
+    const { error } = await query.insert([{ ...data }]);
+    if (error) {
+      if (error.code === '23505') return { success: false, message: 'Error: Ya existe una red con ese nombre.' };
+      return { success: false, message: `Error al guardar: ${error.message}` };
+    }
+  }
+
+  revalidatePath('/admin/redes');
+  revalidatePath('/');
+  return { success: true, message: socialId ? 'Red social actualizada.' : 'Red social creada.' };
+}
+export async function deleteSocialLink(id: string) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  
+  if (!id) {
+    return { success: false, message: 'ID de red social no proporcionado.' };
+  }
+
+  const { error } = await supabase
+    .from('redes_sociales')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    return { success: false, message: `Error al borrar: ${error.message}` };
+  }
+
+  revalidatePath('/admin/redes'); 
+  revalidatePath('/');
+  return { success: true, message: 'Red social eliminada con éxito.' };
 }
 
 // --- ACCIÓN PARA PERFIL (SOBRE MÍ) ---
@@ -499,4 +495,47 @@ export async function uploadImage(formData: FormData) {
   }
 
   return { success: true, url: publicUrlData.publicUrl, message: 'Imagen subida con éxito.' };
+}
+
+// --- ACCIÓN PARA FORMULARIO DE CONTACTO ---
+export async function sendContactEmail(prevState: any, formData: FormData) {
+  // 1. Inicializar Resend con tu API Key
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  // 2. Obtener los datos del formulario
+  const senderEmail = formData.get('email') as string;
+  const message = formData.get('message') as string;
+
+  // 3. Validar (simple)
+  if (!senderEmail || !message) {
+    return { success: false, message: 'Por favor, completa todos los campos.' };
+  }
+
+  // 4. Intentar enviar el correo
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Portafolio <onboarding@resend.dev>',
+      
+      // El correo al que quieres que lleguen los mensajes
+      to: ['abraham_benj18@hotmail.com'],
+      
+      subject: `Nuevo Mensaje de Portafolio de: ${senderEmail}`,
+      
+      // El cuerpo del correo
+      // Puedes usar HTML aquí, pero por ahora usaremos texto simple
+      text: `De: ${senderEmail}\n\nMensaje:\n${message}`,
+    });
+
+    if (error) {
+      console.error("Error al enviar correo:", error);
+      return { success: false, message: `Error al enviar: ${error.message}` };
+    }
+
+    // 5. Éxito
+    return { success: true, message: '¡Mensaje enviado con éxito!' };
+
+  } catch (exception) {
+    console.error(exception);
+    return { success: false, message: 'Ocurrió un error inesperado.' };
+  }
 }
