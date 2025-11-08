@@ -7,10 +7,12 @@ import EducationSection from '@/components/EducationSection';
 import ProjectList from '@/components/ProjectList';
 import ContactForm from '@/components/ContactForm';
 import HeroProfile from '@/components/HeroProfile';
+import SkillsSection from '@/components/SkillsSection';
 import { PortafolioItem } from '@/app/admin/proyectos/page';
 import { ExperienciaItem } from '@/app/admin/experiencia/page';
 import { EducacionItem } from '@/app/admin/educacion/page';
 import { PerfilItem } from '@/app/admin/sobre-mi/page';
+import { HabilidadItem } from '@/app/admin/habilidades/page';
 
 // --- FUNCIONES DE OBTENCIÓN DE DATOS ---
 
@@ -42,6 +44,13 @@ async function getEducation(supabase: any): Promise<EducacionItem[]> {
   return data || [];
 }
 
+// 5. Obtener Habilidades
+async function getSkills(supabase: any): Promise<HabilidadItem[]> {
+  const { data, error } = await supabase.from('habilidades').select('*').order('nombre', { ascending: true });
+  if (error) console.error("Error al cargar habilidades:", error.message);
+  return data || [];
+}
+
 // --- PÁGINA PRINCIPAL ---
 export default async function Home() {
   const cookieStore = cookies();
@@ -51,11 +60,12 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Cargamos TODOS los datos en paralelo para máxima velocidad
-  const [profile, projects, experiences, educationItems] = await Promise.all([
+  const [profile, projects, experiences, educationItems, skills] = await Promise.all([
     getProfile(supabase),
     getProjects(supabase),
     getExperience(supabase),
     getEducation(supabase),
+    getSkills(supabase),
   ]);
 
   return (
@@ -77,6 +87,9 @@ export default async function Home() {
             
             {/* --- SECCIÓN EDUCACIÓN - AHORA DINÁMICA --- */}
             <EducationSection educationItems={educationItems} />
+
+            {/* --- SECCIÓN HABILIDADES - AHORA DINÁMICA --- */}
+            <SkillsSection skills={skills} />
 
             {/* --- SECCIÓN PROYECTOS (DINÁMICA) --- */}
             <h2 id="projects" className="text-slate-900 text-3xl font-bold px-4 pb-3 pt-5 scroll-mt-20 border-b-2 border-blue-500 mb-6">

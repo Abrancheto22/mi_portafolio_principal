@@ -38,7 +38,10 @@ const ProjectList: React.FC<ProjectListProps> = ({ items }) => {
           <div className="relative z-10 flex flex-col h-full bg-white rounded-lg">
             <div
               className="w-full bg-center bg-no-repeat aspect-video bg-cover"
-              style={{ backgroundImage: `url(${item.url_demo || 'https://via.placeholder.com/300x160.png?text=Proyecto'})` }}
+              // Usa la nueva 'image_url' del proyecto
+              style={{ 
+                backgroundImage: `url(${item.image_url || 'https://via.placeholder.com/300x160.png?text=Proyecto'})` 
+              }}
             ></div>
             <div className="p-4 flex flex-col flex-grow">
               <p className="text-slate-900 text-lg font-bold leading-normal mb-2">

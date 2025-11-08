@@ -10,5 +10,7 @@ module.exports = {
       // (Aquí puedes extender el tema si quieres)
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
 };

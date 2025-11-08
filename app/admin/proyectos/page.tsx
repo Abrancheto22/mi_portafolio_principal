@@ -11,6 +11,7 @@ export type PortafolioItem = {
   url_demo: string | null;
   url_github: string;
   fecha_creacion: string;
+  image_url: string | null;
 };
 
 async function getPortafolioItems(): Promise<PortafolioItem[]> {

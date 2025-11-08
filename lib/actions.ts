@@ -6,11 +6,16 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 // --- ACCIONES PARA PROYECTOS ---
+// --- EN lib/actions.ts ---
+
+// Reemplaza tu función upsertProject existente con esta:
 export async function upsertProject(prevState: any, formData: FormData) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
-  const projectId = formData.get('id') as string;
+  // 1. Obtener datos de texto y el archivo
+  const projectId = formData.get('id') as string | null;
+  const file = formData.get('file_proyecto') as File;
   
   const data = {
     titulo: formData.get('titulo') as string,
@@ -20,51 +25,77 @@ export async function upsertProject(prevState: any, formData: FormData) {
     tecnologias: (formData.get('tecnologias') as string)
       .split(',')
       .map(tech => tech.trim()),
+    // Obtenemos la URL de la imagen existente (si la hay)
+    image_url: formData.get('image_url_existente') as string,
   };
 
+  // 2. Validar texto
   if (!data.titulo || !data.descripcion || !data.tecnologias || !data.url_github) {
-    return { message: 'Todos los campos obligatorios deben ser llenados.' };
+    return { success: false, message: 'Todos los campos obligatorios deben ser llenados.' };
   }
-  let query = supabase.from('proyectos');
-  
-  if (projectId) {
-    const { error } = await query
-      .update({
-        titulo: data.titulo,
-        descripcion: data.descripcion,
-        tecnologias: data.tecnologias,
-        url_demo: data.url_demo || null,
-        url_github: data.url_github,
-      })
-      .eq('id', projectId);
-    
-    if (error) {
-        console.error('Error al actualizar proyecto:', error);
-        return { message: `Error al actualizar: ${error.message}` };
+
+  // 3. LÓGICA DE SUBIDA DE IMAGEN (SI HAY UN ARCHIVO NUEVO)
+  if (file && file.size > 0) {
+    // 3.1. Validar tipo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return { success: false, message: 'Tipo de archivo no permitido (Solo JPG, PNG, WEBP).' };
     }
 
-  } else {
-    const { error } = await query
-      .insert([
-        {
-          titulo: data.titulo,
-          descripcion: data.descripcion,
-          tecnologias: data.tecnologias,
-          url_demo: data.url_demo || null,
-          url_github: data.url_github,
-        }
-      ]);
+    // 3.2. Subir el archivo
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExtension}`;
+    const filePath = `images/proyectos/${fileName}`; // Carpeta 'proyectos'
+
+    const { error: uploadError } = await supabase.storage
+      .from('portafolio-images') // Tu bucket
+      .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+    if (uploadError) {
+      console.error('Error al subir imagen de proyecto:', uploadError);
+      return { success: false, message: `Error al subir imagen: ${uploadError.message}` };
+    }
+
+    // 3.3. Obtener la URL pública y asignarla a 'data'
+    const { data: publicUrlData } = supabase.storage
+      .from('portafolio-images')
+      .getPublicUrl(filePath);
       
+    data.image_url = publicUrlData.publicUrl; // Asigna la NUEVA URL
+  }
+
+  // 4. Lógica de Upsert
+  let query = supabase.from('proyectos'); // <-- Tabla 'proyectos'
+  
+  const payload = {
+    titulo: data.titulo,
+    descripcion: data.descripcion,
+    tecnologias: data.tecnologias,
+    url_demo: data.url_demo || null,
+    url_github: data.url_github,
+    image_url: data.image_url || null, // <-- Guarda la URL de la imagen
+  };
+
+  if (projectId) {
+    // UPDATE
+    const { error } = await query.update(payload).eq('id', projectId);
+    if (error) {
+      console.error('Error al actualizar proyecto:', error);
+      return { success: false, message: `Error al actualizar: ${error.message}` };
+    }
+  } else {
+    // INSERT
+    const { error } = await query.insert([payload]);
     if (error) {
       console.error('Error al crear proyecto:', error);
-      return { message: `Error al guardar: ${error.message}` };
+      return { success: false, message: `Error al guardar: ${error.message}` };
     }
   }
 
-  revalidatePath('/admin/proyectos'); 
-  revalidatePath('/'); 
-  
-  redirect('/admin/proyectos');
+  // 5. Éxito
+  revalidatePath('/admin/proyectos');
+  revalidatePath('/');
+  return { success: true, message: projectId ? 'Proyecto actualizado con éxito.' : 'Proyecto creado con éxito.' };
 }
 export async function deleteProject(id: string) {
   const cookieStore = cookies();
@@ -333,36 +364,69 @@ export async function deleteSkill(id: string) {
   
   return { success: true, message: 'Habilidad eliminada con éxito.' };
 }
+
 // --- ACCIÓN PARA PERFIL (SOBRE MÍ) ---
 export async function updateProfile(prevState: any, formData: FormData) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
-  // 1. Obtener y parsear los datos del formulario
+  // 1. Obtener todos los datos del formulario
   const data = {
     nombre_completo: formData.get('nombre_completo') as string,
     titulo: formData.get('titulo') as string,
     ubicacion: formData.get('ubicacion') as string,
     acerca_de: formData.get('acerca_de') as string,
-    url_foto_perfil: formData.get('url_foto_perfil') as string,
+    // Dejamos la URL vacía por ahora, la llenaremos si se sube una imagen
+    url_foto_perfil: formData.get('url_foto_perfil_existente') as string, 
   };
+  const file = formData.get('file_foto_perfil') as File;
 
-  // 2. Validar
+  // 2. Validar texto
   if (!data.nombre_completo || !data.titulo || !data.acerca_de) {
     return { success: false, message: 'Nombre, Título y Acerca de son obligatorios.' };
   }
 
-  // 3. Lógica de Actualización
-  // Actualizamos la fila DONDE EL ID SEA EL QUE YA CONOCEMOS
-  // (Como solo hay una fila, podemos usar un ID fijo o .limit(1))
-  // Lo más seguro es obtener el ID de la fila
+  // 3. LÓGICA DE SUBIDA DE IMAGEN (SI HAY UN ARCHIVO NUEVO)
+  if (file && file.size > 0) {
+    // 3.1. Validar tipo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return { success: false, message: 'Tipo de archivo no permitido (Solo JPG, PNG, WEBP).' };
+    }
+
+    // 3.2. Subir el archivo
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExtension}`;
+    const filePath = `images/perfil/${fileName}`; // Carpeta 'perfil'
+
+    const { error: uploadError } = await supabase.storage
+      .from('portafolio-images') // Tu bucket
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Error al subir imagen:', uploadError);
+      return { success: false, message: `Error al subir imagen: ${uploadError.message}` };
+    }
+
+    // 3.3. Obtener la URL pública y asignarla a 'data'
+    const { data: publicUrlData } = supabase.storage
+      .from('portafolio-images')
+      .getPublicUrl(filePath);
+      
+    data.url_foto_perfil = publicUrlData.publicUrl;
+
+  } // Fin de la lógica de subida
+
+  // 4. Lógica de Actualización de Perfil (con la URL de imagen nueva o la existente)
   const { data: profileData } = await supabase.from('perfil').select('id').limit(1).single();
-  
   if (!profileData) {
     return { success: false, message: 'No se encontró el perfil para actualizar.' };
   }
 
-  const { error } = await supabase
+  const { error: updateError } = await supabase
     .from('perfil')
     .update({
       nombre_completo: data.nombre_completo,
@@ -371,18 +435,68 @@ export async function updateProfile(prevState: any, formData: FormData) {
       acerca_de: data.acerca_de,
       url_foto_perfil: data.url_foto_perfil || null,
     })
-    .eq('id', profileData.id); // <-- Actualiza solo esa fila
+    .eq('id', profileData.id);
 
-  // 4. Manejar errores
-  if (error) {
-    console.error('Error al actualizar perfil:', error);
-    return { success: false, message: `Error al actualizar: ${error.message}` };
+  if (updateError) {
+    console.error('Error al actualizar perfil:', updateError);
+    return { success: false, message: `Error al actualizar: ${updateError.message}` };
   }
 
-  // 5. Éxito: Limpiar la caché y redirigir
-  revalidatePath('/admin/sobre-mi'); // Limpia caché del admin
-  revalidatePath('/'); // Limpia caché de la página principal
+  // 5. Éxito
+  revalidatePath('/admin/sobre-mi'); 
+  revalidatePath('/');
   
-  // No redirigimos, solo mostramos un mensaje de éxito
   return { success: true, message: '¡Perfil actualizado con éxito!' };
+}
+
+// --- FUNCIÓN PARA SUBIR IMAGEN A SUPABASE STORAGE ---
+export async function uploadImage(formData: FormData) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  const file = formData.get('file') as File; // Obtenemos el archivo
+
+  if (!file || file.size === 0) {
+    return { success: false, message: 'No se ha proporcionado ningún archivo.' };
+  }
+
+  // 1. Validar tipo de archivo (opcional pero recomendado)
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    return { success: false, message: 'Tipo de archivo no permitido. Solo JPG, PNG, WEBP.' };
+  }
+
+  // 2. Generar un nombre único para el archivo
+  // Usaremos un UUID para evitar colisiones y mantener los nombres limpios
+  const fileExtension = file.name.split('.').pop();
+  const fileName = `${crypto.randomUUID()}.${fileExtension}`; // crypto.randomUUID() es de Node.js
+
+  // 3. Ruta de subida en el bucket
+  // Puedes organizar en carpetas: 'proyectos/imagen.jpg', 'perfil/foto.png'
+  // Por ahora, lo subimos directamente a la raíz del bucket 'portafolio-images'
+  const filePath = `images/${fileName}`; 
+
+  // 4. Subir el archivo al Storage
+  const { data, error } = await supabase.storage
+    .from('portafolio-images') // <-- Nombre de tu bucket
+    .upload(filePath, file, {
+      cacheControl: '3600', // Caché por una hora
+      upsert: false, // No sobrescribir si ya existe
+    });
+
+  if (error) {
+    console.error('Error al subir imagen:', error);
+    return { success: false, message: `Error al subir imagen: ${error.message}` };
+  }
+
+  // 5. Obtener la URL pública de la imagen
+  const { data: publicUrlData } = supabase.storage
+    .from('portafolio-images')
+    .getPublicUrl(filePath);
+
+  if (!publicUrlData || !publicUrlData.publicUrl) {
+    return { success: false, message: 'No se pudo obtener la URL pública de la imagen.' };
+  }
+
+  return { success: true, url: publicUrlData.publicUrl, message: 'Imagen subida con éxito.' };
 }
