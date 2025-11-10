@@ -499,31 +499,24 @@ export async function uploadImage(formData: FormData) {
 
 // --- ACCIÓN PARA FORMULARIO DE CONTACTO ---
 export async function sendContactEmail(prevState: any, formData: FormData) {
-  // 1. Inicializar Resend con tu API Key
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   // 2. Obtener los datos del formulario
+  const name = formData.get('name') as string;
   const senderEmail = formData.get('email') as string;
   const message = formData.get('message') as string;
 
   // 3. Validar (simple)
-  if (!senderEmail || !message) {
+  if (!name || !senderEmail || !message) {
     return { success: false, message: 'Por favor, completa todos los campos.' };
   }
-
-  // 4. Intentar enviar el correo
+  
   try {
     const { data, error } = await resend.emails.send({
       from: 'Portafolio <onboarding@resend.dev>',
-      
-      // El correo al que quieres que lleguen los mensajes
       to: ['abraham_benj18@hotmail.com'],
-      
-      subject: `Nuevo Mensaje de Portafolio de: ${senderEmail}`,
-      
-      // El cuerpo del correo
-      // Puedes usar HTML aquí, pero por ahora usaremos texto simple
-      text: `De: ${senderEmail}\n\nMensaje:\n${message}`,
+      subject: `Nuevo Mensaje de Portafolio de: ${name}`,
+      text: `De: ${name} (${senderEmail})\n\nMensaje:\n${message}`,
     });
 
     if (error) {
@@ -531,7 +524,6 @@ export async function sendContactEmail(prevState: any, formData: FormData) {
       return { success: false, message: `Error al enviar: ${error.message}` };
     }
 
-    // 5. Éxito
     return { success: true, message: '¡Mensaje enviado con éxito!' };
 
   } catch (exception) {

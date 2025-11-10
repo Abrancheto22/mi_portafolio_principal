@@ -41,23 +41,18 @@ const Navbar: React.FC<NavbarProps> = ({ user, socialLinks }) => {
       </div>
       
       <div className="flex flex-1 justify-end gap-8">
-        {/* ... (Enlaces de navegación - sin cambios) ... */}
         <div className="flex items-center gap-9">
-          <a className="text-slate-600 ..." href="#about">Acerca de</a>
-          <a className="text-slate-600 ..." href="#experience">Experiencia</a>
-          <a className="text-slate-600 ..." href="#projects">Proyectos</a>
-          <a className="text-slate-600 ..." href="#contact">Contacto</a>
+          <a className="text-slate-600 hover:text-slate-900 text-sm font-medium leading-normal" href="/">Inicio</a>
+          <a className="text-slate-600 hover:text-slate-900 text-sm font-medium leading-normal" href="/proyectos">Proyectos</a>
+          <a className="text-slate-600 hover:text-slate-900 text-sm font-medium leading-normal" href="/contacto">Contacto</a>
           {user && (<span className="text-blue-600 ...">(ADMIN)</span>)}
         </div>
         
         <div className="flex gap-2">
           
-          {/* 3. LÓGICA DE MAPEO (¡ESTA PARTE ES IDÉNTICA!) */}
-          {/* Funciona igual porque solo cambiamos el 'iconMap' */}
           {socialLinks && socialLinks.map((link) => {
-            // Convierte "GitHub", "Facebook" a "github", "facebook"
             const key = link.nombre.toLowerCase(); 
-            const IconComponent = iconMap[key]; // Busca en el mapa
+            const IconComponent = iconMap[key]; 
 
             if (!IconComponent) {
               return null;

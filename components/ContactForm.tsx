@@ -1,7 +1,7 @@
 "use client"; 
 
 import { useFormState, useFormStatus } from 'react-dom';
-import { sendContactEmail } from '@/lib/actions'; // <-- Importa la nueva acción
+import { sendContactEmail } from '@/lib/actions';
 import React, { useEffect, useRef } from 'react';
 
 // Botón de Submit
@@ -44,36 +44,55 @@ const ContactForm = () => {
       
       {/* Conecta el <form> a la Server Action */}
       <form ref={formRef} action={dispatch} className="px-4">
-        <div className="flex max-w-xl flex-wrap items-end gap-4 py-3">
+        <div className="flex max-w-xl flex-wrap items-end gap-4">
+          <label className="flex flex-col min-w-40 flex-1">
+            <p className="text-slate-700 text-sm font-semibold leading-normal pb-2">Tu Nombre</p>
+            <input
+              type="text"
+              name="name"
+              required
+              placeholder="Tu nombre completo"
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg 
+                        text-slate-900 border-slate-300 bg-white 
+                        focus:border-blue-500 focus:ring-blue-500
+                        h-14 placeholder:text-slate-400 p-[15px] text-base font-normal leading-normal"
+            />
+          </label>
+        </div>
+
+        {/* Campo "Correo Electrónico" */}
+        <div className="flex max-w-xl flex-wrap items-end gap-4">
           <label className="flex flex-col min-w-40 flex-1">
             <p className="text-slate-700 text-sm font-semibold leading-normal pb-2">Tu Correo Electrónico</p>
             <input
               type="email"
-              name="email" // <-- El 'name' debe coincidir con el formData.get()
+              name="email" 
               required
               placeholder="tu_correo@ejemplo.com"
               className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg 
-                         text-slate-900 border-slate-300 bg-white 
-                         focus:border-blue-500 focus:ring-blue-500
-                         h-14 placeholder:text-slate-400 p-[15px] text-base font-normal leading-normal"
+                        text-slate-900 border-slate-300 bg-white 
+                        focus:border-blue-500 focus:ring-blue-500
+                        h-14 placeholder:text-slate-400 p-[15px] text-base font-normal leading-normal"
             />
           </label>
         </div>
-        <div className="flex max-w-xl flex-wrap items-end gap-4 py-3">
+
+        {/* Campo "Mensaje" */}
+        <div className="flex max-w-xl flex-wrap items-end gap-4">
           <label className="flex flex-col min-w-40 flex-1">
             <p className="text-slate-700 text-sm font-semibold leading-normal pb-2">Mensaje</p>
             <textarea
-              name="message" // <-- El 'name' debe coincidir con el formData.get()
+              name="message" 
               required
               placeholder="Escribe tu mensaje aquí..."
               className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg 
-                         text-slate-900 border-slate-300 bg-white 
-                         focus:border-blue-500 focus:ring-blue-500
-                         min-h-36 placeholder:text-slate-400 p-[15px] text-base font-normal leading-normal"
+                        text-slate-900 border-slate-300 bg-white 
+                        focus:border-blue-500 focus:ring-blue-500
+                        h-14 placeholder:text-slate-400 p-[15px] text-base font-normal leading-normal"
             ></textarea>
           </label>
         </div>
-        
+
         {/* Mensaje de Éxito/Error */}
         {state?.message && (
           <div className={`text-sm p-3 rounded-md my-4 max-w-xl ${

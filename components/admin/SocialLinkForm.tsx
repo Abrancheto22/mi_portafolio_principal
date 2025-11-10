@@ -2,8 +2,9 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { upsertSocialLink } from '@/lib/actions';
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { SocialLinkItem } from '@/app/admin/redes/page';
+import { useRouter } from 'next/navigation';
 
 interface SocialLinkFormProps { socialLink?: SocialLinkItem; }
 
@@ -33,9 +34,21 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
 // Formulario principal
 // ---------------------------------------------
 export default function SocialLinkForm({ socialLink }: SocialLinkFormProps) {
+  const router = useRouter();
   const isEditing = !!socialLink; 
   const initialState = { success: false, message: null }; 
   const [state, dispatch] = useFormState(upsertSocialLink as any, initialState); 
+
+  // --- AÑADE ESTE HOOK ---
+  useEffect(() => {
+    if (state.success) {
+      const timer = setTimeout(() => {
+        router.push('/admin/redes'); // Redirige a la tabla de redes
+      }, 1500); 
+      return () => clearTimeout(timer);
+    }
+  }, [state.success, router]);
+  // --- FIN DEL HOOK ---
 
   return (
     <div className="bg-white p-8 rounded-lg border border-gray-200 shadow-sm">
