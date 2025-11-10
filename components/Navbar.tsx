@@ -1,4 +1,4 @@
-"use client"; // Es 'client' solo por el LogoutButton
+"use client"; // Es 'client' por el LogoutButton y el iconMap
 
 import React from 'react';
 import LogoutButton from './LogoutButton';
@@ -21,7 +21,7 @@ interface NavbarProps {
   socialLinks: SocialLinkItem[]; 
 }
 
-// --- ESTE ES EL NAVBAR NO-RESPONSIVE (PERO STICKY) ---
+// --- NAVBAR NO-RESPONSIVE (PERO STICKY Y ESTABLE) ---
 const Navbar: React.FC<NavbarProps> = ({ user, socialLinks }) => {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 bg-white/75 px-10 py-3 backdrop-blur-lg">
