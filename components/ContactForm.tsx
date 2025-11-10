@@ -2,9 +2,9 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { sendContactEmail } from '@/lib/actions';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react'; // <-- Importa useState
 
-// Botón de Submit
+// --- Componente SubmitButton (sin cambios) ---
 function SubmitButton() {
   const { pending } = useFormStatus(); 
   return (
@@ -23,27 +23,47 @@ function SubmitButton() {
   );
 }
 
-// Formulario de Contacto
+// --- Formulario de Contacto (Actualizado con lógica de Timeout) ---
 const ContactForm = () => {
+  // 1. 'actionState' es el estado que devuelve la Server Action
   const initialState = { success: false, message: null };
-  const [state, dispatch] = useFormState(sendContactEmail as any, initialState);
-  const formRef = useRef<HTMLFormElement>(null); // Ref para resetear el formulario
+  const [actionState, dispatch] = useFormState(sendContactEmail as any, initialState);
+  
+  // 2. 'displayState' es el estado local que *mostraremos* al usuario.
+  //    Esto nos permite limpiarlo después de un tiempo.
+  const [displayState, setDisplayState] = useState(initialState);
+  
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // Resetea el formulario si el envío fue exitoso
+  // 3. useEffect para manejar el mensaje y el temporizador
   useEffect(() => {
-    if (state.success) {
-      formRef.current?.reset();
+    // Cada vez que la Server Action responde, actualizamos el mensaje a mostrar
+    if (actionState.message) {
+      setDisplayState(actionState);
+
+      // Si fue un ÉXITO...
+      if (actionState.success) {
+        formRef.current?.reset(); // Limpia el formulario
+        
+        // ...inicia un temporizador para borrar el mensaje de éxito
+        const timer = setTimeout(() => {
+          setDisplayState({ success: false, message: null }); // Borra el mensaje
+        }, 5000); // 5000ms = 5 segundos
+
+        // Limpia el temporizador si el componente se desmonta
+        return () => clearTimeout(timer);
+      }
     }
-  }, [state.success]);
+  }, [actionState]); // Este efecto se ejecuta cada vez que 'actionState' cambia
 
   return (
     <section id="contact" className="scroll-mt-20 mb-10">
-      <h2 className="text-slate-900 text-3xl font-bold px-4 pb-3 pt-5 border-b-2 border-blue-500 mb-6">
-        Contacto
-      </h2>
+      {/* El <h2> se movió a la página page.tsx, 
+          así que este componente es solo el formulario */}
       
-      {/* Conecta el <form> a la Server Action */}
-      <form ref={formRef} action={dispatch} className="px-4">
+      <form ref={formRef} action={dispatch} className="space-y-6">
+        
+        {/* Campo "Nombre" */}
         <div className="flex max-w-xl flex-wrap items-end gap-4">
           <label className="flex flex-col min-w-40 flex-1">
             <p className="text-slate-700 text-sm font-semibold leading-normal pb-2">Tu Nombre</p>
@@ -92,15 +112,15 @@ const ContactForm = () => {
             ></textarea>
           </label>
         </div>
-
-        {/* Mensaje de Éxito/Error */}
-        {state?.message && (
+        
+        {/* 4. Mensaje de Éxito/Error (Ahora usa 'displayState') */}
+        {displayState.message && (
           <div className={`text-sm p-3 rounded-md my-4 max-w-xl ${
-            state.success 
+            displayState.success // <-- Usa el estado local
               ? 'bg-green-100 border border-green-300 text-green-700' 
               : 'bg-red-50 border border-red-300 text-red-500'
           }`}>
-            {state.message}
+            {displayState.message} {/* <-- Muestra el estado local */}
           </div>
         )}
 

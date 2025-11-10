@@ -1,11 +1,10 @@
 import React from 'react';
-import { ExperienciaItem } from '@/app/admin/experiencia/page'; // Importa el tipo
+import { ExperienciaItem } from '@/app/admin/experiencia/page';
 
 interface ExperienceSectionProps {
   experiences: ExperienciaItem[];
 }
 
-// Helper para formatear fechas
 const formatDate = (dateString: string | null) => {
   if (!dateString) return "Actualidad";
   return new Date(dateString).toLocaleDateString('es-ES', {
@@ -17,24 +16,33 @@ const formatDate = (dateString: string | null) => {
 const ExperienceSection: React.FC<ExperienceSectionProps> = ({ experiences }) => {
   return (
     <section id="experience" className="scroll-mt-20 mb-8">
-      <h2 className="text-slate-900 text-3xl font-bold px-4 pb-3 pt-5 border-b-2 border-blue-500 mb-4">Experiencia</h2>
+      <h2 className="text-slate-900 text-3xl font-bold mb-10 border-b-2 border-blue-500 pb-3">
+        Experiencia Laboral
+      </h2>
       
-      {experiences.length > 0 ? (
-        experiences.map((exp) => (
-          <div key={exp.id} className="px-4 py-3 mb-4">
-            <p className="text-slate-800 text-lg font-medium leading-normal">{exp.puesto}</p>
-            <p className="text-slate-600 text-md font-normal leading-normal">{exp.empresa}</p>
-            <p className="text-slate-500 text-sm font-normal leading-normal">
-              {formatDate(exp.fecha_inicio)} - {formatDate(exp.fecha_fin)}
-            </p>
-            <p className="text-slate-700 text-base leading-relaxed mt-2">
-              {exp.descripcion}
-            </p>
-          </div>
-        ))
-      ) : (
-        <p className="text-slate-500 px-4">Aún no hay experiencia para mostrar.</p>
-      )}
+      {/* Contenedor de la línea de tiempo */}
+      <div className="relative pl-8 border-l-2 border-gray-200">
+        {experiences.length > 0 ? (
+          experiences.map((exp) => (
+            // Tarjeta de cada item
+            <div key={exp.id} className="mb-10 ml-4">
+              {/* Círculo en la línea de tiempo */}
+              <div className="absolute w-4 h-4 bg-blue-600 rounded-full mt-1.5 -left-2 border-2 border-white"></div>
+              
+              <time className="text-sm font-normal leading-none text-slate-500">
+                {formatDate(exp.fecha_inicio)} - {formatDate(exp.fecha_fin)}
+              </time>
+              <h3 className="text-xl font-semibold text-slate-800 mt-1">{exp.puesto}</h3>
+              <p className="text-md font-medium text-slate-600 mb-3">{exp.empresa}</p>
+              <p className="text-base text-slate-700 leading-relaxed">
+                {exp.descripcion}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p className="text-slate-500 ml-4">Aún no hay experiencia para mostrar.</p>
+        )}
+      </div>
     </section>
   );
 };

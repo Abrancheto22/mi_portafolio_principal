@@ -39,12 +39,11 @@ async function getSkills(supabase: any): Promise<HabilidadItem[]> {
   return data || [];
 }
 
-// --- PÁGINA PRINCIPAL (LA PÁGINA DE "INICIO") ---
+// --- PÁGINA PRINCIPAL---
 export default async function Home() {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
-  // Cargamos todos los datos para la PÁGINA DE INICIO
   const [profile, experiences, educationItems, skills] = await Promise.all([
     getProfile(supabase),
     getExperience(supabase),
@@ -53,20 +52,25 @@ export default async function Home() {
   ]);
 
   return (
-    // El Navbar se carga desde layout.tsx
     <div className="layout-container flex h-full grow flex-col">
       <div className="px-4 md:px-20 lg:px-40 flex flex-1 justify-center py-5">
-        <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
+        
+        {/* Contenedor de una sola columna */}
+        <div className="layout-content-container flex flex-col max-w-4xl w-full"> {/* <-- max-w-4xl */}
           
           {profile && <HeroProfile profile={profile} />}
-          {profile && <AboutSection aboutText={profile.acerca_de} />}
+          {profile && <AboutSection aboutText={profile.acerca_de} />} 
           
-          {/* Estas secciones ahora viven aquí */}
+          {/* Las líneas de tiempo que te gustaron */}
+          <div className="mt-16">
+            <ExperienceSection experiences={experiences} />
+          </div>
+          <div className="mt-16">
+            <EducationSection educationItems={educationItems} />
+          </div>
+
+          {/* El carrusel de habilidades irá aquí */}
           <SkillsSection skills={skills} />
-          <ExperienceSection experiences={experiences} />
-          <EducationSection educationItems={educationItems} />
-          
-          {/* La sección de Proyectos y Contacto ya NO están aquí */}
           
         </div>
       </div>
