@@ -11,62 +11,45 @@ export async function upsertProject(prevState: any, formData: FormData) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
-  // 1. Obtener datos de texto y el archivo
   const projectId = formData.get('id') as string | null;
-  const file = formData.get('file_proyecto') as File;
+  
+  // 1. Datos básicos y Portada (Igual que antes)
+  const filePortada = formData.get('file_proyecto') as File;
+  const galleryFiles = formData.getAll('gallery_files') as File[]; // <-- ¡NUEVO! Obtenemos array
   
   const data = {
     titulo: formData.get('titulo') as string,
     descripcion: formData.get('descripcion') as string,
     url_demo: formData.get('url_demo') as string,
     url_github: formData.get('url_github') as string,
-    tecnologias: (formData.get('tecnologias') as string)
-      .split(',')
-      .map(tech => tech.trim()),
-    // Obtenemos la URL de la imagen existente (si la hay)
+    tecnologias: (formData.get('tecnologias') as string).split(',').map(t => t.trim()),
     image_url: formData.get('image_url_existente') as string,
     estado: formData.get('estado') === 'on' ? true : false,
   };
 
-  // 2. Validar texto
-  if (!data.titulo || !data.descripcion || !data.tecnologias || !data.url_github) {
-    return { success: false, message: 'Todos los campos obligatorios deben ser llenados.' };
+  // Validaciones básicas...
+  if (!data.titulo || !data.descripcion) return { success: false, message: 'Faltan datos.' };
+
+  // --- A. SUBIDA DE PORTADA (Lógica existente) ---
+  if (filePortada && filePortada.size > 0) {
+     // ... (Tu código actual para subir la portada a 'image_url') ...
+     // Copia aquí tu bloque existente de subida de portada
+     const ext = filePortada.name.split('.').pop();
+     const fileName = `cover-${crypto.randomUUID()}.${ext}`;
+     const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('portafolio-images').upload(`proyectos/${fileName}`, filePortada);
+     if (!uploadError) {
+        const { data: publicUrl } = supabase.storage.from('portafolio-images').getPublicUrl(`proyectos/${fileName}`);
+        data.image_url = publicUrl.publicUrl;
+     }
   }
 
-  // 3. LÓGICA DE SUBIDA DE IMAGEN (SI HAY UN ARCHIVO NUEVO)
-  if (file && file.size > 0) {
-    // 3.1. Validar tipo
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      return { success: false, message: 'Tipo de archivo no permitido (Solo JPG, PNG, WEBP).' };
-    }
-
-    // 3.2. Subir el archivo
-    const fileExtension = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExtension}`;
-    const filePath = `images/proyectos/${fileName}`; // Carpeta 'proyectos'
-
-    const { error: uploadError } = await supabase.storage
-      .from('portafolio-images') // Tu bucket
-      .upload(filePath, file, { cacheControl: '3600', upsert: false });
-
-    if (uploadError) {
-      console.error('Error al subir imagen de proyecto:', uploadError);
-      return { success: false, message: `Error al subir imagen: ${uploadError.message}` };
-    }
-
-    // 3.3. Obtener la URL pública y asignarla a 'data'
-    const { data: publicUrlData } = supabase.storage
-      .from('portafolio-images')
-      .getPublicUrl(filePath);
-      
-    data.image_url = publicUrlData.publicUrl; // Asigna la NUEVA URL
-  }
-
-  // 4. Lógica de Upsert
-  let query = supabase.from('proyectos'); // <-- Tabla 'proyectos'
+  // --- B. GUARDAR PROYECTO (INSERT o UPDATE) ---
+  let currentProjectId = projectId;
+  let query = supabase.from('proyectos');
   
-  const payload = {
+  // Preparamos el objeto a guardar
+  const projectPayload = {
     titulo: data.titulo,
     descripcion: data.descripcion,
     tecnologias: data.tecnologias,
@@ -76,26 +59,59 @@ export async function upsertProject(prevState: any, formData: FormData) {
     estado: data.estado
   };
 
-  if (projectId) {
+  if (currentProjectId) {
     // UPDATE
-    const { error } = await query.update(payload).eq('id', projectId);
-    if (error) {
-      console.error('Error al actualizar proyecto:', error);
-      return { success: false, message: `Error al actualizar: ${error.message}` };
-    }
+    const { error } = await query.update(projectPayload).eq('id', currentProjectId);
+    if (error) return { success: false, message: error.message };
   } else {
-    // INSERT
-    const { error } = await query.insert([payload]);
-    if (error) {
-      console.error('Error al crear proyecto:', error);
-      return { success: false, message: `Error al guardar: ${error.message}` };
+    // INSERT (Necesitamos recuperar el ID del nuevo proyecto para la galería)
+    const { data: newProject, error } = await query.insert([projectPayload]).select().single();
+    if (error) return { success: false, message: error.message };
+    currentProjectId = newProject.id; // Capturamos el nuevo ID
+  }
+
+  // --- C. SUBIDA DE GALERÍA (¡LO NUEVO!) ---
+  // Solo si tenemos un ID de proyecto válido y archivos en la galería
+  if (currentProjectId && galleryFiles && galleryFiles.length > 0) {
+    
+    // Filtramos archivos vacíos (por si acaso)
+    const validFiles = galleryFiles.filter(f => f.size > 0);
+
+    for (const file of validFiles) {
+      // 1. Detectar tipo (Imagen o Video)
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      
+      if (!isImage && !isVideo) continue; // Saltar archivos no válidos
+
+      const tipo = isImage ? 'imagen' : 'video';
+      const ext = file.name.split('.').pop();
+      const fileName = `gallery-${currentProjectId}-${crypto.randomUUID()}.${ext}`;
+      
+      // 2. Subir a Storage
+      const { error: uploadError } = await supabase.storage
+        .from('portafolio-images')
+        .upload(`proyectos/galeria/${fileName}`, file);
+
+      if (!uploadError) {
+        // 3. Obtener URL
+        const { data: publicUrl } = supabase.storage
+          .from('portafolio-images')
+          .getPublicUrl(`proyectos/galeria/${fileName}`);
+
+        // 4. Insertar en la tabla 'proyecto_multimedia'
+        await supabase.from('proyecto_multimedia').insert({
+          proyecto_id: currentProjectId,
+          url: publicUrl.publicUrl,
+          tipo: tipo
+        });
+      }
     }
   }
 
-  // 5. Éxito
   revalidatePath('/admin/proyectos');
   revalidatePath('/');
-  return { success: true, message: projectId ? 'Proyecto actualizado con éxito.' : 'Proyecto creado con éxito.' };
+  return { success: true, message: 'Proyecto guardado con galería.' };
 }
 export async function deleteProject(id: string) {
   const cookieStore = cookies();
@@ -530,4 +546,29 @@ export async function sendContactEmail(prevState: any, formData: FormData) {
     console.error(exception);
     return { success: false, message: 'Ocurrió un error inesperado.' };
   }
+}
+
+// --- BORRAR ITEM DE GALERÍA ---
+export async function deleteGalleryItem(itemId: string, itemUrl: string) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // 1. Borrar de la Base de Datos
+  const { error: dbError } = await supabase
+    .from('proyecto_multimedia')
+    .delete()
+    .eq('id', itemId);
+
+  if (dbError) {
+    return { success: false, message: `Error al borrar de DB: ${dbError.message}` };
+  }
+
+  // 2. Borrar del Storage (limpieza del archivo físico)
+  const path = itemUrl.split('/portafolio-images/').pop();
+  if (path) {
+    await supabase.storage.from('portafolio-images').remove([path]);
+  }
+
+  revalidatePath('/admin/proyectos');
+  return { success: true, message: 'Archivo eliminado.' };
 }

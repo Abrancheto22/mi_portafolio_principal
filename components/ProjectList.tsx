@@ -1,7 +1,8 @@
 "use client";
 
 import React from 'react';
-import type { PortafolioItem } from '@/app/admin/proyectos/page'; 
+import type { PortafolioItem } from '@/app/admin/proyectos/page';
+import Link from 'next/link';
 
 interface ProjectListProps {
   items: PortafolioItem[];
@@ -22,7 +23,8 @@ const ProjectList: React.FC<ProjectListProps> = ({ items }) => {
     <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 p-4">
       
       {items.map((item) => (
-        // Fondo blanco, sombra sutil y borde de gradiente al hover
+
+        <Link key={item.id} href={`/proyectos/${item.id}`} className="block group h-full">
         <div 
           key={item.id} 
           className="group relative flex flex-col gap-3 rounded-xl overflow-hidden bg-white shadow-lg border border-gray-100
@@ -62,6 +64,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ items }) => {
             </div>
           </div>
         </div>
+      </Link>
       ))}
     </div>
   );
