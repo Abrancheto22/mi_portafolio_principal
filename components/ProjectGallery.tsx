@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image'; // <--- 1. Importamos el componente Image
 import { FaChevronLeft, FaChevronRight, FaPlayCircle, FaImage } from 'react-icons/fa';
 
 type GalleryItem = {
@@ -15,7 +16,6 @@ interface ProjectGalleryProps {
 }
 
 export default function ProjectGallery({ coverImage, gallery }: ProjectGalleryProps) {
-  // 1. Unificamos todo en una sola lista
   const items = [
     ...(coverImage ? [{ id: 'cover', url: coverImage, tipo: 'imagen' }] : []),
     ...gallery
@@ -34,7 +34,6 @@ export default function ProjectGallery({ coverImage, gallery }: ProjectGalleryPr
 
   const currentItem = items[currentIndex];
 
-  // Funciones de navegación
   const prevSlide = () => {
     const newIndex = currentIndex === 0 ? items.length - 1 : currentIndex - 1;
     setCurrentIndex(newIndex);
@@ -47,52 +46,55 @@ export default function ProjectGallery({ coverImage, gallery }: ProjectGalleryPr
   return (
     <div className="flex flex-col gap-4">
       
-      {/* --- 1. VISOR PRINCIPAL (Main Stage) --- */}
+      {/* --- 1. VISOR PRINCIPAL --- */}
       <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl group border border-slate-800">
         
-        {/* Contenido (Imagen o Video) */}
         {currentItem.tipo === 'video' ? (
           <video 
             src={currentItem.url} 
             controls 
             autoPlay 
-            loop // Opcional: loop para videos cortos
+            loop 
             className="w-full h-full object-contain" 
           />
         ) : (
-          <div
-            className="w-full h-full transition-all duration-500 ease-in-out"
-            style={{ 
-              backgroundImage: `url(${currentItem.url})`,
-              backgroundSize: 'contain', // Ajusta la imagen sin cortarla
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          >
-            {/* Fondo borroso detrás para llenar espacios vacíos (Efecto profesional) */}
-            <div 
-              className="absolute inset-0 -z-10 blur-2xl opacity-50 scale-110"
-              style={{ 
-                backgroundImage: `url(${currentItem.url})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
+          // Usamos un contenedor relativo para que 'fill' funcione
+          <div className="relative w-full h-full">
+            
+            {/* Fondo borroso (Efecto ambiental) */}
+            <Image 
+              src={currentItem.url}
+              alt="Fondo ambiental"
+              fill
+              className="object-cover blur-2xl opacity-50 scale-110 -z-10"
+            />
+
+            {/* Imagen Principal Nítida */}
+            <Image 
+              src={currentItem.url}
+              alt={`Imagen del proyecto ${currentIndex + 1}`}
+              fill
+              className="object-contain z-10"
+              priority // Carga esta imagen de inmediato (sin lazy load) porque es la principal
+              sizes="(max-width: 768px) 100vw, 1200px" // Ayuda al navegador a elegir el tamaño correcto
             />
           </div>
         )}
 
-        {/* Flechas de Navegación (Solo si hay más de 1) */}
+        {/* Flechas de Navegación */}
         {items.length > 1 && (
           <>
             <button 
               onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/30 text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 transform group-hover:scale-100 scale-90"
+              aria-label="Imagen anterior"
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/30 text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 transform group-hover:scale-100 scale-90 z-20"
             >
               <FaChevronLeft size={24} />
             </button>
             <button 
               onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/30 text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 transform group-hover:scale-100 scale-90"
+              aria-label="Siguiente imagen"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/30 text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 transform group-hover:scale-100 scale-90 z-20"
             >
               <FaChevronRight size={24} />
             </button>
@@ -116,14 +118,19 @@ export default function ProjectGallery({ coverImage, gallery }: ProjectGalleryPr
             >
               {item.tipo === 'video' ? (
                 <div className="w-full h-full bg-slate-900 flex items-center justify-center relative">
+                   {/* Para miniaturas de video no usamos Next Image porque es un video, 
+                       pero podríamos poner una imagen poster si la tuvieras. 
+                       Por ahora mantenemos el video original. */}
                   <video src={item.url} className="absolute inset-0 w-full h-full object-cover opacity-50" />
                   <FaPlayCircle className="text-white/80 z-10" size={20} />
                 </div>
               ) : (
-                <img 
+                <Image 
                   src={item.url} 
                   alt={`Miniatura ${index + 1}`} 
-                  className="w-full h-full object-cover" 
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 20vw, 150px" // Las miniaturas son pequeñas
                 />
               )}
             </div>

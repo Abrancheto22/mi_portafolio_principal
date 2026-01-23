@@ -34,7 +34,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({ experiences }) =>
               </time>
               <h3 className="text-xl font-semibold text-slate-800 mt-1">{exp.puesto}</h3>
               <p className="text-md font-medium text-slate-600 mb-3">{exp.empresa}</p>
-              <p className="text-base text-slate-700 leading-relaxed">
+              <p className="text-base text-slate-700 leading-relaxed text-justify">
                 {exp.descripcion}
               </p>
             </div>

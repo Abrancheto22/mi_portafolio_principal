@@ -5,8 +5,8 @@ import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import Navbar from '@/components/Navbar';
 import type { SocialLinkItem } from '@/app/admin/redes/page';
+import { Analytics } from "@vercel/analytics/react";
 
-// --- (Fuentes... sin cambios) ---
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const notoSans = Noto_Sans({
   subsets: ["latin"],
@@ -14,13 +14,11 @@ const notoSans = Noto_Sans({
   variable: "--font-noto-sans",
 });
 
-// --- (Metadata... sin cambios) ---
 export const metadata = {
   title: "Abraham Ordoñez | Portafolio de Ingeniería",
   description: "Portafolio de Abraham Ordoñez, Ingeniero de Sistemas.",
 };
 
-// --- (getSocialLinks... sin cambios) ---
 async function getSocialLinks(supabase: any): Promise<SocialLinkItem[]> {
   const { data, error } = await supabase
     .from('redes_sociales')
@@ -32,7 +30,6 @@ async function getSocialLinks(supabase: any): Promise<SocialLinkItem[]> {
   return data || [];
 }
 
-// --- LAYOUT 'async' ---
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -52,7 +49,6 @@ export default async function RootLayout({
 
   return (
     <html lang="es">
-      {/* Esta es la estructura que teníamos antes, sin 'z-index' */}
       <body
         className={`font-inter antialiased ${inter.variable} ${notoSans.variable} 
                    bg-slate-50 text-slate-900 
@@ -63,6 +59,8 @@ export default async function RootLayout({
         <main className="flex-grow">
           {children}
         </main>
+
+        <Analytics />
         
       </body>
     </html>

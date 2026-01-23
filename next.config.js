@@ -1,8 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Si tenías configuraciones especiales (como dominios de imágenes),
-  // necesitaríamos agregarlas aquí, pero por ahora esto es suficiente.
+  images: {
+    // remotePatterns es la forma moderna de autorizar dominios en Next.js 14+
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co', // El ** permite cualquier subdominio de tu proyecto
+      },
+    ],
+  },
 };
 
 module.exports = nextConfig;

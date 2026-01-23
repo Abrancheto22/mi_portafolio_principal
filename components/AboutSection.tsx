@@ -12,7 +12,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ aboutText }) => {
         Acerca de Mí
       </h2>
       
-      <div className="prose prose-slate max-w-none text-slate-700 text-lg leading-relaxed">
+      <div className="prose prose-slate max-w-none text-slate-700 text-lg leading-relaxed text-justify">
         <p>
           {aboutText}
         </p>
