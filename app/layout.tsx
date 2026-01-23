@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import Navbar from '@/components/Navbar';
 import type { SocialLinkItem } from '@/app/admin/redes/page';
 import { Analytics } from "@vercel/analytics/react";
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const notoSans = Noto_Sans({
@@ -19,7 +20,7 @@ export const metadata = {
   description: "Portafolio de Abraham Ordoñez, Ingeniero de Sistemas.",
 };
 
-async function getSocialLinks(supabase: any): Promise<SocialLinkItem[]> {
+async function getSocialLinks(supabase: SupabaseClient): Promise<SocialLinkItem[]> {
   const { data, error } = await supabase
     .from('redes_sociales')
     .select('*')
@@ -27,7 +28,7 @@ async function getSocialLinks(supabase: any): Promise<SocialLinkItem[]> {
     .order('nombre', { ascending: true });
     
   if (error) console.error("Error al cargar redes sociales:", error.message);
-  return data || [];
+  return (data as SocialLinkItem[]) || [];
 }
 
 export default async function RootLayout({
