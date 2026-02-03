@@ -46,7 +46,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, socialLinks }) => {
           {/* Logo / Título */}
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600"></div>
-            <span className="text-lg font-bold text-slate-900">Portfolio</span>
+            <span className="text-lg font-bold text-slate-900">Portafolio</span>
           </div>
 
           {/* --- MENÚ DE ESCRITORIO (Hidden en Mobile) --- */}

@@ -6,10 +6,17 @@
 /* 2. Aplica las fuentes base (como lo teníamos) */
 @layer base {
   body {
-    /* IMPORTANTE: No establecemos 'background' o 'color' aquí.
-      Dejamos que app/layout.tsx (con 'bg-slate-50' y 'text-slate-900')
-      se encargue de eso, para que Tailwind tenga el control.
-    */
     font-family: var(--font-inter), "Noto Sans", sans-serif;
   }
+}
+
+/* Ocultar barra de scroll en elementos con la clase 'scrollbar-hide' */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Para Firefox */
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
 }

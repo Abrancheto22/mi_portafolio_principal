@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React, { useState, useRef } from 'react';
 import { FaChevronLeft, FaChevronRight, FaPlayCircle, FaImage } from 'react-icons/fa';
 
 type GalleryItem = {
@@ -22,70 +21,97 @@ export default function ProjectGallery({ coverImage, gallery }: ProjectGalleryPr
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const thumbnailsRef = useRef<HTMLDivElement>(null); 
 
   if (items.length === 0) {
     return (
-      // Cambié el fondo a un tono más oscuro para que coincida con el nuevo diseño
-      <div className="w-full aspect-video bg-slate-900 rounded-2xl flex flex-col items-center justify-center text-slate-500 gap-3 border border-slate-800">
+      <div className="w-full h-96 bg-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 gap-2">
         <FaImage size={48} />
-        <span className="font-medium text-sm uppercase tracking-wider">Sin multimedia</span>
+        <span className="font-medium">Sin imágenes disponibles</span>
       </div>
     );
   }
 
   const currentItem = items[currentIndex];
 
+  const handleThumbnailClick = (index: number) => {
+    setCurrentIndex(index);
+    if (thumbnailsRef.current) {
+      const thumbnail = thumbnailsRef.current.children[index] as HTMLElement;
+      if (thumbnail) {
+        const scrollLeft = thumbnail.offsetLeft - (thumbnailsRef.current.offsetWidth / 2) + (thumbnail.offsetWidth / 2);
+        thumbnailsRef.current.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+      }
+    }
+  };
+
   const prevSlide = () => {
     const newIndex = currentIndex === 0 ? items.length - 1 : currentIndex - 1;
-    setCurrentIndex(newIndex);
+    handleThumbnailClick(newIndex);
   };
   const nextSlide = () => {
     const newIndex = currentIndex === items.length - 1 ? 0 : currentIndex + 1;
-    setCurrentIndex(newIndex);
+    handleThumbnailClick(newIndex);
   };
 
   return (
     <div className="flex flex-col gap-4">
       
       {/* --- 1. VISOR PRINCIPAL --- */}
-      {/* Usamos bg-slate-900 en lugar de black puro para que sea menos duro */}
-      <div className="relative w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-2xl group border border-slate-800/50">
+      <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl group border border-slate-800">
         
         {currentItem.tipo === 'video' ? (
           <video 
             src={currentItem.url} 
             controls 
-            // autoPlay // Opcional: a veces es molesto que arranque solo con sonido
-            className="w-full h-full object-cover" // <--- CAMBIO CLAVE: object-cover
+            autoPlay 
+            loop
+            className="w-full h-full object-contain" 
           />
         ) : (
-          // Imagen Principal
-          <Image 
-            src={currentItem.url}
-            alt={`Imagen del proyecto ${currentIndex + 1}`}
-            fill
-            // <--- CAMBIO CLAVE: object-cover. Quitamos el z-10 y el blur de fondo anterior.
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            priority 
-            sizes="(max-width: 768px) 100vw, 1200px"
-          />
+          <div className="w-full h-full relative">
+             <div 
+              className="absolute inset-0 -z-10 blur-2xl opacity-40 scale-110 transition-all duration-500"
+              style={{ 
+                backgroundImage: `url(${currentItem.url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            />
+            <div
+              className="w-full h-full transition-all duration-500 ease-in-out"
+              style={{ 
+                backgroundImage: `url(${currentItem.url})`,
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+          </div>
         )}
 
-        {/* Flechas de Navegación (con un diseño un poco más limpio) */}
+        {/* --- FLECHAS DE NAVEGACIÓN (CORREGIDAS) --- */}
         {items.length > 1 && (
           <>
             <button 
               onClick={prevSlide}
-              aria-label="Imagen anterior"
-              // Botones más sutiles que aparecen al pasar el mouse
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-4 rounded-full bg-black/20 hover:bg-black/50 text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 hover:scale-110 border border-white/10"
+              // CAMBIO: bg-black/50 hace que el círculo sea oscuro y visible siempre
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full 
+                         bg-black/50 hover:bg-black/70 text-white 
+                         backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 
+                         transform group-hover:scale-100 scale-90 border border-white/10 shadow-lg"
+              title="Anterior"
             >
               <FaChevronLeft size={20} />
             </button>
             <button 
               onClick={nextSlide}
-              aria-label="Siguiente imagen"
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-4 rounded-full bg-black/20 hover:bg-black/50 text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 hover:scale-110 border border-white/10"
+              // CAMBIO: Igual aquí, fondo oscuro para contraste
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full 
+                         bg-black/50 hover:bg-black/70 text-white 
+                         backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 
+                         transform group-hover:scale-100 scale-90 border border-white/10 shadow-lg"
+              title="Siguiente"
             >
               <FaChevronRight size={20} />
             </button>
@@ -93,33 +119,33 @@ export default function ProjectGallery({ coverImage, gallery }: ProjectGalleryPr
         )}
       </div>
 
-      {/* --- 2. TIRA DE MINIATURAS (Thumbnails) --- */}
+      {/* --- 2. TIRA DE MINIATURAS --- */}
       {items.length > 1 && (
-        <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-3 px-2">
+        <div 
+          ref={thumbnailsRef}
+          className="flex gap-2 px-1 overflow-x-auto pb-2 scrollbar-hide scroll-smooth"
+        >
           {items.map((item, index) => (
             <div
               key={index}
-              onClick={() => setCurrentIndex(index)}
-              // Miniaturas con bordes más redondeados y mejor feedback visual
-              className={`relative aspect-square cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 ease-out
+              onClick={() => handleThumbnailClick(index)}
+              className={`relative w-20 h-20 md:w-24 md:h-24 flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ease-out
                 ${currentIndex === index 
-                  ? 'border-blue-500 ring-4 ring-blue-500/20 opacity-100 scale-100 z-10 shadow-lg' 
-                  : 'border-transparent opacity-50 hover:opacity-100 hover:scale-105 hover:border-slate-300'
+                  ? 'border-blue-600 ring-2 ring-blue-100 opacity-100 scale-100' 
+                  : 'border-transparent opacity-50 hover:opacity-100 hover:scale-105'
                 }`
               }
             >
               {item.tipo === 'video' ? (
                 <div className="w-full h-full bg-slate-900 flex items-center justify-center relative">
-                  <video src={item.url} className="absolute inset-0 w-full h-full object-cover opacity-60" />
-                  <FaPlayCircle className="text-white z-10 drop-shadow-lg" size={24} />
+                  <video src={item.url} className="absolute inset-0 w-full h-full object-cover opacity-50" />
+                  <FaPlayCircle className="text-white/90 z-10 drop-shadow-lg" size={24} />
                 </div>
               ) : (
-                <Image 
+                <img 
                   src={item.url} 
                   alt={`Miniatura ${index + 1}`} 
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 20vw, 150px"
+                  className="w-full h-full object-cover" 
                 />
               )}
             </div>
